@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>내 행성을 찾아라! — 원의 둘레와 넓이 놀이</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{font-family:'Noto Sans KR',sans-serif;color:#fff;background:#0b1240;
+    background-image:radial-gradient(ellipse at 20% 10%,#1f3b9a 0%,transparent 55%),radial-gradient(ellipse at 85% 90%,#3a1d7a 0%,transparent 50%);
+    user-select:none;-webkit-user-select:none}
+  button{font-family:inherit;cursor:pointer;border:none}
+  .jua{font-family:'Jua',sans-serif;font-weight:400}
+  .screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center}
+  .screen.on{display:flex}
+  .stars{position:fixed;inset:0;pointer-events:none;z-index:0}
+  .screen,.modal{z-index:2}
+
+  /* ---------- 시작 화면 ---------- */
+  .title{font-family:'Jua';font-size:64px;letter-spacing:1px;text-shadow:0 4px 0 #2a1a6e,0 0 24px rgba(255,255,255,.25)}
+  .title b{color:#ffd43b;font-weight:400}
+  .subtitle{margin-top:6px;font-size:17px;color:#c8d3ff}
+  .card{background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.16);border-radius:22px;padding:18px 22px}
+  .players{display:flex;gap:22px;margin-top:26px}
+  .pbox{width:350px}
+  .pbox h3{font-family:'Jua';font-weight:400;font-size:24px;margin-bottom:10px}
+  .pbox input{width:100%;font-size:22px;padding:10px 14px;border-radius:12px;border:2px solid rgba(255,255,255,.3);background:rgba(0,0,0,.25);color:#fff;font-family:inherit;outline:none}
+  .pbox input:focus{border-color:#ffd43b}
+  .chips{display:flex;gap:10px;margin-top:12px}
+  .chip{width:42px;height:42px;border-radius:50%;border:3px solid rgba(255,255,255,.3);position:relative}
+  .chip.sel{border-color:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.35);transform:scale(1.08)}
+  .chip.dis{opacity:.2;pointer-events:none}
+  .opts{display:flex;gap:22px;margin-top:18px;width:722px}
+  .opts .card{flex:1}
+  .opts h4{font-size:16px;color:#c8d3ff;margin-bottom:10px;font-weight:700}
+  .seg{display:flex;background:rgba(0,0,0,.25);border-radius:12px;padding:4px}
+  .seg button{flex:1;padding:10px 6px;border-radius:9px;background:transparent;color:#c8d3ff;font-size:16px;font-weight:700}
+  .seg button.sel{background:#ffd43b;color:#2a1a6e}
+  .btnrow{display:flex;gap:14px;margin-top:24px}
+  .btn{font-family:'Jua';font-size:24px;padding:14px 34px;border-radius:999px;background:#ffd43b;color:#2a1a6e;box-shadow:0 5px 0 #c99a00}
+  .btn:active{transform:translateY(3px);box-shadow:0 2px 0 #c99a00}
+  .btn.ghost{background:rgba(255,255,255,.14);color:#fff;box-shadow:0 5px 0 rgba(0,0,0,.3)}
+  .btn.small{font-size:19px;padding:10px 24px}
+  .credit{position:absolute;bottom:12px;right:18px;font-size:13px;color:#9fb0ee;background:none;text-decoration:underline dotted}
+
+  /* ---------- 가위바위보 ---------- */
+  .rps-wrap{display:flex;gap:30px;margin-top:26px}
+  .rps-side{width:400px;text-align:center;padding:24px}
+  .rps-side .nm{font-family:'Jua';font-size:30px;margin-bottom:6px}
+  .rps-side .st{font-size:16px;color:#c8d3ff;height:24px}
+  .rps-btns{display:flex;gap:12px;justify-content:center;margin-top:16px}
+  .rps-btns button{width:104px;height:104px;border-radius:24px;background:rgba(255,255,255,.12);font-size:52px;border:3px solid transparent}
+  .rps-btns button span{display:block;font-size:15px;color:#fff;font-weight:700;margin-top:-4px}
+  .rps-btns button:active{transform:scale(.95)}
+  .rps-btns.done button{opacity:.3;pointer-events:none}
+  .rps-reveal{font-size:96px;height:120px;line-height:120px}
+  .rps-result{font-family:'Jua';font-size:34px;margin-top:20px;height:44px;color:#ffd43b}
+
+  /* ---------- 게임 화면 ---------- */
+  #game{justify-content:flex-start}
+  .topbar{width:100%;height:66px;display:flex;align-items:center;gap:12px;padding:0 14px;flex-shrink:0}
+  .topbar .logo{font-family:'Jua';font-size:24px;white-space:nowrap}
+  .topbar .logo b{color:#ffd43b;font-weight:400}
+  .pcards{flex:1;display:flex;justify-content:center;gap:12px}
+  .pcard{display:flex;align-items:center;gap:10px;padding:6px 16px 6px 8px;border-radius:999px;background:rgba(255,255,255,.08);border:3px solid transparent;transition:.25s;min-width:200px}
+  .pcard .dot{width:34px;height:34px;border-radius:50%;flex-shrink:0;border:3px solid #fff}
+  .pcard .nm{font-weight:900;font-size:18px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pcard .sc{margin-left:auto;font-family:'Jua';font-size:26px}
+  .pcard .sc small{font-size:15px;color:#c8d3ff;margin-left:2px}
+  .pcard.turn{background:rgba(255,255,255,.2);border-color:#ffd43b;transform:scale(1.04)}
+  .pcard .tt{font-size:12px;color:#ffd43b;font-weight:700;display:none}
+  .pcard.turn .tt{display:block}
+  .iconbtn{height:42px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.12);color:#fff;font-size:15px;font-weight:700;white-space:nowrap}
+  .board-wrap{flex:1;width:100%;display:flex;align-items:center;justify-content:center;padding:0 10px 10px;min-height:0;position:relative}
+  #board{display:block;border-radius:20px;touch-action:none;box-shadow:0 0 0 3px rgba(255,255,255,.12),0 10px 40px rgba(0,0,0,.5)}
+  .hint{position:absolute;left:50%;transform:translateX(-50%);bottom:22px;background:rgba(0,0,0,.55);padding:8px 18px;border-radius:999px;font-size:16px;pointer-events:none;transition:opacity .3s;white-space:nowrap}
+
+  /* ---------- 모달 ---------- */
+  .modal{position:fixed;inset:0;background:rgba(5,8,30,.7);display:none;align-items:center;justify-content:center;z-index:10}
+  .modal.on{display:flex}
+  .mbox{background:#fff;color:#22264a;border-radius:26px;padding:22px 26px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  .prob{width:960px;max-width:96vw;display:flex;gap:24px}
+  .prob-left{flex:1;display:flex;flex-direction:column}
+  .prob-head{display:flex;align-items:center;gap:10px}
+  .tag{font-family:'Jua';font-size:20px;padding:4px 16px;border-radius:999px;color:#fff}
+  .who{font-weight:900;font-size:17px}
+  #diagram{width:300px;height:300px;align-self:center;margin:6px 0}
+  .q{font-size:22px;font-weight:700;line-height:1.5;text-align:center}
+  .q em{font-style:normal;color:#e5484d}
+  .pi-note{text-align:center;font-size:15px;color:#6b7099;margin-top:4px}
+  .formula-btn{align-self:center;margin-top:10px;background:#eef0ff;color:#4a3fb5;font-weight:700;font-size:15px;padding:7px 16px;border-radius:999px}
+  .formula{display:none;margin-top:8px;background:#f6f7ff;border-radius:14px;padding:10px 14px;font-size:15px;line-height:1.7}
+  .formula.on{display:block}
+  .prob-right{width:360px}
+  .calc-disp{background:#1d2148;color:#fff;border-radius:16px;padding:10px 16px;text-align:right;min-height:92px}
+  .calc-expr{font-size:18px;color:#a9b3ea;min-height:26px;word-break:break-all}
+  .calc-val{font-size:40px;font-weight:900;line-height:1.2;word-break:break-all}
+  .calc-label{display:flex;justify-content:space-between;font-size:13px;color:#8d95c6;font-weight:700;margin-bottom:6px}
+  .keys{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+  .keys button{height:56px;border-radius:14px;font-size:25px;font-weight:700;background:#eef0f8;color:#22264a;box-shadow:0 3px 0 #cfd3e6}
+  .keys button:active{transform:translateY(2px);box-shadow:0 1px 0 #cfd3e6}
+  .keys .op{background:#dfe3ff;color:#3b35a8}
+  .keys .fn{background:#ffe3e3;color:#c92a2a;font-size:20px}
+  .keys .pi{background:#fff3bf;color:#8a6100;font-size:20px}
+  .keys .eq{background:#4c6ef5;color:#fff;box-shadow:0 3px 0 #364fc7}
+  .keys .zero{grid-column:span 2}
+  .submit{width:100%;margin-top:12px;font-family:'Jua';font-size:24px;padding:12px;border-radius:16px;background:#2fae60;color:#fff;box-shadow:0 4px 0 #1f7a42}
+  .submit:active{transform:translateY(3px);box-shadow:0 1px 0 #1f7a42}
+  .result{display:none;position:absolute;inset:0;border-radius:26px;background:rgba(255,255,255,.97);flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px}
+  .result.on{display:flex}
+  .result .big{font-family:'Jua';font-size:54px}
+  .result .ans{font-size:22px;margin-top:10px;font-weight:700}
+  .result .sol{margin-top:16px;background:#f6f7ff;border-radius:16px;padding:14px 22px;font-size:19px;line-height:1.8;max-width:640px}
+  .result .btn{margin-top:24px}
+  .shake{animation:shake .35s}
+  @keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+
+  .toast{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.8);opacity:0;background:rgba(15,20,60,.92);border:3px solid rgba(255,255,255,.25);padding:22px 40px;border-radius:24px;text-align:center;pointer-events:none;transition:.25s;z-index:5}
+  .toast.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  .toast .t1{font-family:'Jua';font-size:36px}
+  .toast .t2{font-size:18px;color:#c8d3ff;margin-top:6px}
+
+  .rules{width:860px;max-width:94vw}
+  .rules h2{font-family:'Jua';font-weight:400;font-size:32px;color:#4a3fb5;margin-bottom:12px}
+  .rules ol{list-style:none;counter-reset:n}
+  .rules li{counter-increment:n;position:relative;padding:9px 0 9px 46px;font-size:18px;line-height:1.55;border-bottom:1px dashed #e2e5f3}
+  .rules li::before{content:counter(n);position:absolute;left:0;top:9px;width:32px;height:32px;border-radius:50%;background:#4a3fb5;color:#fff;font-weight:900;display:flex;align-items:center;justify-content:center}
+  .rules .legend{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;font-size:15px}
+  .rules .legend span{padding:5px 12px;border-radius:999px;color:#fff;font-weight:700}
+  .close-x{position:absolute;top:14px;right:16px;width:40px;height:40px;border-radius:50%;background:#eef0f8;color:#22264a;font-size:22px;font-weight:900}
+
+  .endbox{text-align:center;width:640px}
+  .endbox h2{font-family:'Jua';font-weight:400;font-size:50px;color:#4a3fb5}
+  .endbox .scores{display:flex;justify-content:center;gap:30px;margin:22px 0}
+  .endbox .scores div{padding:16px 26px;border-radius:20px;background:#f3f4fb;min-width:200px}
+  .endbox .scores .nm{font-weight:900;font-size:20px}
+  .endbox .scores .n{font-family:'Jua';font-size:56px}
+  .endbox .btnrow{justify-content:center}
+
+  .log{width:560px;max-width:92vw}
+  .log h2{font-family:'Jua';font-weight:400;font-size:28px;color:#4a3fb5;margin-bottom:10px}
+  .log li{margin-left:20px;line-height:1.7;font-size:16px}
+</style>
+</head>
+<body>
+<canvas class="stars" id="stars"></canvas>
+
+<!-- 시작 화면 -->
+<section class="screen on" id="start">
+  <div class="title">내 <b>행성</b>을 찾아라!</div>
+  <div class="subtitle">6학년 2학기 수학 · 5. 원의 둘레와 넓이 · 수학 놀이에 풍덩</div>
+  <div class="players">
+    <div class="card pbox"><h3>첫 번째 친구</h3><input id="n0" maxlength="8" placeholder="이름" value="친구 1"><div class="chips" id="c0"></div></div>
+    <div class="card pbox"><h3>두 번째 친구</h3><input id="n1" maxlength="8" placeholder="이름" value="친구 2"><div class="chips" id="c1"></div></div>
+  </div>
+  <div class="opts">
+    <div class="card"><h4>행성 문제</h4><div class="seg" id="modeSeg"><button data-v="book" class="sel">교과서 행성 11개</button><button data-v="random">새로운 행성 (무작위)</button></div></div>
+    <div class="card"><h4>틀렸을 때</h4><div class="seg" id="solSeg"><button data-v="0" class="sel">정답 숨기기</button><button data-v="1">정답과 풀이 보여 주기</button></div></div>
+  </div>
+  <div class="btnrow">
+    <button class="btn ghost" onclick="openRules()">놀이 방법</button>
+    <button class="btn" onclick="toRps()">가위바위보로 순서 정하기</button>
+  </div>
+  <button class="credit" onclick="openLog()">만든이 푸르이든 · <span class="ver"></span></button>
+</section>
+
+<!-- 가위바위보 -->
+<section class="screen" id="rps">
+  <div class="title" style="font-size:46px">가위바위보로 순서 정하기</div>
+  <div class="subtitle">한 사람씩 몰래 고르세요. 둘 다 고르면 결과가 나와요.</div>
+  <div class="rps-wrap">
+    <div class="card rps-side" id="rs0"><div class="nm"></div><div class="st"></div><div class="rps-reveal"></div><div class="rps-btns"></div></div>
+    <div class="card rps-side" id="rs1"><div class="nm"></div><div class="st"></div><div class="rps-reveal"></div><div class="rps-btns"></div></div>
+  </div>
+  <div class="rps-result" id="rpsResult"></div>
+  <div class="btnrow"><button class="btn ghost small" onclick="show('start')">뒤로</button><button class="btn ghost small" onclick="rpsSkip()">무작위로 정하기</button></div>
+</section>
+
+<!-- 게임 -->
+<section class="screen" id="game">
+  <div class="topbar">
+    <div class="logo">내 <b>행성</b>을 찾아라!</div>
+    <div class="pcards" id="pcards"></div>
+    <button class="iconbtn" onclick="openRules()">놀이 방법</button>
+    <button class="iconbtn" id="soundBtn" onclick="toggleSound()">소리 켜짐</button>
+    <button class="iconbtn" onclick="confirmEnd()">놀이 끝내기</button>
+  </div>
+  <div class="board-wrap" id="boardWrap">
+    <canvas id="board"></canvas>
+    <div class="hint" id="hint">말을 뒤로 끌었다가 놓으면 튕겨 나가요!</div>
+    <div class="toast" id="toast"><div class="t1"></div><div class="t2"></div></div>
+  </div>
+</section>
+
+<!-- 문제 -->
+<div class="modal" id="probModal">
+  <div class="mbox prob" id="probBox">
+    <div class="prob-left">
+      <div class="prob-head"><span class="tag" id="pTag"></span><span class="who" id="pWho"></span></div>
+      <canvas id="diagram" width="600" height="600"></canvas>
+      <div class="q" id="pQ"></div>
+      <div class="pi-note">원주율은 3.14로 계산해요.</div>
+      <button class="formula-btn" onclick="document.getElementById('formula').classList.toggle('on')">공식 살짝 보기</button>
+      <div class="formula" id="formula">
+        원주 = 지름 × 원주율 &nbsp;·&nbsp; 지름 = 반지름 × 2<br>
+        원의 넓이 = 반지름 × 반지름 × 원주율
+      </div>
+    </div>
+    <div class="prob-right">
+      <div class="calc-label"><span>계산기</span><span id="unitNote"></span></div>
+      <div class="calc-disp"><div class="calc-expr" id="cExpr"></div><div class="calc-val" id="cVal">0</div></div>
+      <div class="keys" id="keys"></div>
+      <button class="submit" onclick="submitAnswer()">이 수로 답하기</button>
+    </div>
+    <div class="result" id="result"></div>
+  </div>
+</div>
+
+<!-- 놀이 방법 -->
+<div class="modal" id="rulesModal" onclick="if(event.target===this)closeM('rulesModal')">
+  <div class="mbox rules">
+    <button class="close-x" onclick="closeM('rulesModal')">×</button>
+    <h2>놀이 방법</h2>
+    <ol>
+      <li>가위바위보를 해서 말을 튕길 순서를 정하고, 자기 색을 골라요.</li>
+      <li>출발 자리에 있는 말을 손가락으로 <b>뒤로 끌었다가 놓으면</b> 반대쪽으로 튕겨 나가요. 많이 끌수록 멀리 가요.</li>
+      <li>말이 들어간 행성을 보고, 행성에 적힌 것(넓이·둘레·지름·반지름)을 계산기로 구해요.</li>
+      <li>답을 바르게 구하면 그 행성에 내 색이 칠해져요. 틀리면 기회가 짝에게 넘어가요.</li>
+      <li>이미 색칠된 행성이나 빈 우주에 말이 멈추면 기회가 짝에게 넘어가요.</li>
+      <li>모든 행성이 칠해지면 끝! 색칠한 행성이 더 많은 사람이 이겨요.</li>
+    </ol>
+    <div class="legend">
+      <span style="background:#8b5cf6">넓이 = 원의 넓이를 구해요</span>
+      <span style="background:#f0492b">둘레 = 원주를 구해요</span>
+      <span style="background:#1c9fd9">지름을 구해요</span>
+      <span style="background:#e0a100">반지름을 구해요</span>
+    </div>
+  </div>
+</div>
+
+<!-- 끝 -->
+<div class="modal" id="endModal">
+  <div class="mbox endbox">
+    <h2 id="endTitle"></h2>
+    <div class="scores" id="endScores"></div>
+    <div class="btnrow">
+      <button class="btn ghost small" style="background:#eef0f8;color:#22264a;box-shadow:0 5px 0 #cfd3e6" onclick="closeM('endModal');show('start')">처음으로</button>
+      <button class="btn" onclick="closeM('endModal');newGame(1-S.first)">한 판 더 (순서 바꿔서)</button>
+    </div>
+  </div>
+</div>
+
+<!-- 변경 기록 -->
+<div class="modal" id="logModal" onclick="if(event.target===this)closeM('logModal')">
+  <div class="mbox log">
+    <button class="close-x" onclick="closeM('logModal')">×</button>
+    <h2>변경 기록</h2>
+    <ul id="logList"></ul>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   내 행성을 찾아라!  — 만든이 푸르이든
+   ========================================================= */
+const VERSION = 'v1.0';
+const CHANGELOG = [
+  ['v1.0','2026-11-25','첫 공개: 말 튕기기, 교과서 행성 11개·무작위 행성, 계산기, 가위바위보 순서 정하기'],
+];
+const PI = 3.14;
+const W = 1000, H = 700;
+const START = {x:895, y:600};
+const PIECE_R = 15;
+
+const COLORS = [
+  {c:'#e5484d', n:'빨강'}, {c:'#3e7bfa', n:'파랑'}, {c:'#2fae60', n:'초록'},
+  {c:'#f59f00', n:'주황'}, {c:'#9c4ddb', n:'보라'}, {c:'#e93d82', n:'분홍'}
+];
+const TYPE = {
+  '넓이':   {color:'#8b5cf6', unit:'cm²', obj:'원의 넓이를'},
+  '둘레':   {color:'#f0492b', unit:'cm',  obj:'원의 둘레(원주)를'},
+  '지름':   {color:'#1c9fd9', unit:'cm',  obj:'지름을'},
+  '반지름': {color:'#e0a100', unit:'cm',  obj:'반지름을'},
+};
+const LAYOUT = [
+  {x:470,y:98, R:62},{x:612,y:182,R:40},{x:140,y:262,R:96},{x:420,y:272,R:60},
+  {x:762,y:112,R:66},{x:580,y:350,R:62},{x:122,y:528,R:62},{x:800,y:334,R:104},
+  {x:610,y:528,R:56},{x:362,y:548,R:80},{x:252,y:400,R:45}
+];
+const BOOK = [
+  {find:'넓이',  given:'r', val:2},
+  {find:'넓이',  given:'r', val:1},
+  {find:'둘레',  given:'r', val:3},
+  {find:'지름',  given:'c', val:12.56},
+  {find:'둘레',  given:'r', val:2},
+  {find:'반지름',given:'a', val:12.56},
+  {find:'넓이',  given:'d', val:4},
+  {find:'둘레',  given:'d', val:7},
+  {find:'지름',  given:'c', val:9.42},
+  {find:'둘레',  given:'d', val:5},
+  {find:'반지름',given:'a', val:3.14},
+];
+
+/* ---------- 상태 ---------- */
+const S = {
+  players:[{name:'친구 1',color:0,score:0},{name:'친구 2',color:1,score:0}],
+  mode:'book', showSol:false, turn:0, first:0,
+  planets:[], phase:'aim', piece:{x:START.x,y:START.y,vx:0,vy:0},
+  drag:null, current:null, sound:true, over:false
+};
+
+/* ---------- 도우미 ---------- */
+const $ = id => document.getElementById(id);
+const round = n => Math.round(n*10000)/10000;
+const fmt = n => String(round(n));
+const rand = (a,b) => a + Math.floor(Math.random()*(b-a+1));
+const pick = arr => arr[Math.floor(Math.random()*arr.length)];
+const pcolor = i => COLORS[S.players[i].color].c;
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id)); if(id==='game') resize();}
+function openM(id){$(id).classList.add('on')}
+function closeM(id){$(id).classList.remove('on')}
+function openRules(){openM('rulesModal')}
+function openLog(){ $('logList').innerHTML = CHANGELOG.map(c=>`<li><b>${c[0]}</b> (${c[1]}) — ${c[2]}</li>`).join(''); openM('logModal'); }
+document.querySelectorAll('.ver').forEach(e=>e.textContent=VERSION);
+
+/* ---------- 소리 ---------- */
+let AC=null;
+function beep(f,d=.12,type='sine',vol=.15,delay=0){
+  if(!S.sound) return;
+  try{ AC = AC || new (window.AudioContext||window.webkitAudioContext)();
+    const t=AC.currentTime+delay, o=AC.createOscillator(), g=AC.createGain();
+    o.type=type;o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+d);
+    o.connect(g).connect(AC.destination);o.start(t);o.stop(t+d+.02);}catch(e){}
+}
+const sfx = {
+  shoot(){beep(300,.15,'triangle');beep(520,.12,'triangle',.1,.05)},
+  bounce(){beep(180,.06,'square',.05)},
+  good(){[523,659,784,1046].forEach((f,i)=>beep(f,.18,'triangle',.14,i*.09))},
+  bad(){beep(300,.2,'sawtooth',.08);beep(220,.3,'sawtooth',.08,.15)},
+  tap(){beep(800,.04,'sine',.06)},
+  pass(){beep(440,.12,'sine',.1);beep(330,.16,'sine',.1,.1)}
+};
+function toggleSound(){S.sound=!S.sound;$('soundBtn').textContent=S.sound?'소리 켜짐':'소리 꺼짐'}
+
+/* ---------- 배경 별 ---------- */
+function drawBgStars(){
+  const c=$('stars'), x=c.getContext('2d');
+  c.width=innerWidth;c.height=innerHeight;
+  for(let i=0;i<140;i++){x.fillStyle=`rgba(255,255,255,${Math.random()*.7+.2})`;x.beginPath();x.arc(Math.random()*c.width,Math.random()*c.height,Math.random()*1.6+.3,0,7);x.fill();}
+}
+
+/* ---------- 시작 화면 ---------- */
+function buildChips(){
+  [0,1].forEach(p=>{
+    const box=$('c'+p); box.innerHTML='';
+    COLORS.forEach((col,i)=>{
+      const b=document.createElement('button');
+      b.className='chip'+(S.players[p].color===i?' sel':'')+(S.players[1-p].color===i?' dis':'');
+      b.style.background=col.c; b.title=col.n;
+      b.onclick=()=>{S.players[p].color=i;buildChips();sfx.tap()};
+      box.appendChild(b);
+    });
+  });
+}
+function segInit(id,cb){
+  $(id).querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    $(id).querySelectorAll('button').forEach(x=>x.classList.toggle('sel',x===b)); cb(b.dataset.v); sfx.tap();
+  });
+}
+segInit('modeSeg',v=>S.mode=v);
+segInit('solSeg',v=>S.showSol=v==='1');
+
+/* ---------- 가위바위보 ---------- */
+const HANDS=[{e:'✌️',n:'가위'},{e:'✊',n:'바위'},{e:'🖐️',n:'보'}];
+let rpsPick=[null,null];
+function readNames(){
+  [0,1].forEach(p=>S.players[p].name=($('n'+p).value.trim()||('친구 '+(p+1))));
+}
+function toRps(){
+  readNames(); rpsPick=[null,null]; $('rpsResult').textContent='';
+  [0,1].forEach(p=>{
+    const side=$('rs'+p);
+    side.style.borderColor=pcolor(p);
+    side.querySelector('.nm').textContent=S.players[p].name;
+    side.querySelector('.nm').style.color=pcolor(p);
+    side.querySelector('.st').textContent='하나를 골라요';
+    side.querySelector('.rps-reveal').textContent='❔';
+    const bx=side.querySelector('.rps-btns'); bx.className='rps-btns'; bx.innerHTML='';
+    HANDS.forEach((h,i)=>{const b=document.createElement('button');b.innerHTML=`${h.e}<span>${h.n}</span>`;b.onclick=()=>rpsChoose(p,i);bx.appendChild(b)});
+  });
+  show('rps');
+}
+function rpsChoose(p,i){
+  rpsPick[p]=i; sfx.tap();
+  const side=$('rs'+p);
+  side.querySelector('.st').textContent='골랐어요! 짝을 기다려요';
+  side.querySelector('.rps-reveal').textContent='✅';
+  side.querySelector('.rps-btns').classList.add('done');
+  if(rpsPick[0]!==null && rpsPick[1]!==null) setTimeout(rpsReveal,350);
+}
+function rpsReveal(){
+  [0,1].forEach(p=>{$('rs'+p).querySelector('.rps-reveal').textContent=HANDS[rpsPick[p]].e;$('rs'+p).querySelector('.st').textContent=HANDS[rpsPick[p]].n});
+  const a=rpsPick[0],b=rpsPick[1];
+  if(a===b){ $('rpsResult').textContent='비겼어요! 다시 한 번!'; sfx.pass(); setTimeout(toRps,1400); return; }
+  const w = ((a-b+3)%3===1)?0:1;   // 가위0 바위1 보2 : 바위>가위, 보>바위, 가위>보
+  $('rpsResult').textContent=`${S.players[w].name} 먼저 시작!`; sfx.good();
+  setTimeout(()=>newGame(w),1500);
+}
+function rpsSkip(){ const w=Math.random()<.5?0:1; $('rpsResult').textContent=`${S.players[w].name} 먼저 시작!`; setTimeout(()=>newGame(w),900); }
+
+/* ---------- 문제 만들기 ---------- */
+function randomProblem(){
+  const find=pick(['넓이','둘레','지름','반지름']);
+  let given, val;
+  if(find==='넓이'||find==='둘레'){
+    given=pick(['r','d']);
+    val = given==='r' ? rand(1,10) : rand(2,16);
+  }else if(find==='지름'){
+    given=pick(['c','c','a']);
+    if(given==='c') val=round(rand(2,15)*PI); else val=round(Math.pow(rand(1,10),2)*PI);
+  }else{
+    given=pick(['a','a','c']);
+    if(given==='a') val=round(Math.pow(rand(1,10),2)*PI); else val=round(rand(1,8)*2*PI);
+  }
+  return {find,given,val};
+}
+function radiusOf(p){
+  if(p.given==='r') return p.val;
+  if(p.given==='d') return p.val/2;
+  if(p.given==='c') return p.val/PI/2;
+  return Math.sqrt(p.val/PI);
+}
+function answerOf(p){
+  const r=radiusOf(p);
+  return round({'넓이':r*r*PI,'둘레':r*2*PI,'지름':r*2,'반지름':r}[p.find]);
+}
+function givenText(p){
+  return {r:`반지름이 <em>${fmt(p.val)} cm</em>인 원`, d:`지름이 <em>${fmt(p.val)} cm</em>인 원`,
+          c:`원주가 <em>${fmt(p.val)} cm</em>인 원`, a:`넓이가 <em>${fmt(p.val)} cm²</em>인 원`}[p.given];
+}
+function solutionText(p){
+  const r=round(radiusOf(p)), d=round(r*2), v=fmt(p.val), A=fmt(answerOf(p)), u=TYPE[p.find].unit;
+  if(p.find==='넓이'){
+    if(p.given==='r') return `원의 넓이 = 반지름 × 반지름 × 원주율<br>= ${v} × ${v} × 3.14 = <b>${A} ${u}</b>`;
+    return `반지름 = 지름 ÷ 2 = ${v} ÷ 2 = ${fmt(r)} (cm)<br>원의 넓이 = ${fmt(r)} × ${fmt(r)} × 3.14 = <b>${A} ${u}</b>`;
+  }
+  if(p.find==='둘레'){
+    if(p.given==='d') return `원주 = 지름 × 원주율<br>= ${v} × 3.14 = <b>${A} ${u}</b>`;
+    return `지름 = 반지름 × 2 = ${v} × 2 = ${fmt(d)} (cm)<br>원주 = ${fmt(d)} × 3.14 = <b>${A} ${u}</b>`;
+  }
+  if(p.find==='지름'){
+    if(p.given==='c') return `지름 = 원주 ÷ 원주율<br>= ${v} ÷ 3.14 = <b>${A} ${u}</b>`;
+    return `반지름 × 반지름 = 넓이 ÷ 3.14 = ${v} ÷ 3.14 = ${fmt(r*r)}<br>${fmt(r)} × ${fmt(r)} = ${fmt(r*r)} 이므로 반지름은 ${fmt(r)} cm<br>지름 = ${fmt(r)} × 2 = <b>${A} ${u}</b>`;
+  }
+  if(p.given==='a') return `반지름 × 반지름 = 넓이 ÷ 3.14 = ${v} ÷ 3.14 = ${fmt(r*r)}<br>${fmt(r)} × ${fmt(r)} = ${fmt(r*r)} 이므로 반지름은 <b>${A} ${u}</b>`;
+  return `지름 = 원주 ÷ 3.14 = ${v} ÷ 3.14 = ${fmt(d)} (cm)<br>반지름 = ${fmt(d)} ÷ 2 = <b>${A} ${u}</b>`;
+}
+
+/* ---------- 새 게임 ---------- */
+function newGame(first){
+  S.first=first; S.turn=first; S.over=false;
+  S.players.forEach(p=>p.score=0);
+  const probs = S.mode==='book' ? BOOK : LAYOUT.map(()=>randomProblem());
+  S.planets = LAYOUT.map((L,i)=>({...L,...probs[i],owner:null,anim:0,strokes:null,seed:Math.random()*1000}));
+  resetPiece();
+  renderCards();
+  show('game');
+  setHint(true);
+}
+function resetPiece(){ Object.assign(S.piece,{x:START.x,y:START.y,vx:0,vy:0}); S.phase='aim'; }
+function renderCards(){
+  $('pcards').innerHTML = S.players.map((p,i)=>`
+    <div class="pcard ${S.turn===i&&!S.over?'turn':''}">
+      <div class="dot" style="background:${pcolor(i)}"></div>
+      <div><div class="tt">지금 차례</div><div class="nm">${p.name}</div></div>
+      <div class="sc">${p.score}<small>개</small></div>
+    </div>`).join('');
+}
+function setHint(on,text){ const h=$('hint'); if(text) h.textContent=text; h.style.opacity=on?1:0; }
+
+/* ---------- 보드 그리기 ---------- */
+const board=$('board'), ctx=board.getContext('2d');
+let scale=1, bgCanvas=null;
+function resize(){
+  const wrap=$('boardWrap'); const cw=wrap.clientWidth-20, ch=wrap.clientHeight-10;
+  let w=Math.min(cw, ch*W/H); if(w<200) w=200; const h=w*H/W;
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  board.style.width=w+'px'; board.style.height=h+'px';
+  board.width=Math.round(w*dpr); board.height=Math.round(h*dpr);
+  scale=board.width/W;
+}
+window.addEventListener('resize',()=>{drawBgStars(); if($('game').classList.contains('on')) resize();});
+
+function makeBg(){
+  bgCanvas=document.createElement('canvas'); bgCanvas.width=W*2; bgCanvas.height=H*2;
+  const b=bgCanvas.getContext('2d'); b.scale(2,2);
+  const g=b.createLinearGradient(0,0,0,H); g.addColorStop(0,'#14237a'); g.addColorStop(1,'#0c1650');
+  b.fillStyle=g; b.fillRect(0,0,W,H);
+  for(let i=0;i<220;i++){b.fillStyle=`rgba(255,255,255,${Math.random()*.6+.2})`;b.beginPath();b.arc(Math.random()*W,Math.random()*H,Math.random()*1.5+.3,0,7);b.fill();}
+  // 반짝 별
+  [[40,60],[690,40],[960,250],[30,420],[500,650],[700,440],[300,150]].forEach(([x,y])=>star(b,x,y,9,'#ffd43b'));
+  // 모서리 장식 행성들
+  b.save(); b.beginPath(); b.arc(985,-10,90,0,7); const pg=b.createRadialGradient(960,-30,10,985,-10,90); pg.addColorStop(0,'#ffb35c'); pg.addColorStop(1,'#e8590c'); b.fillStyle=pg; b.fill();
+  b.strokeStyle='rgba(116,192,252,.85)'; b.lineWidth=10; b.beginPath(); b.ellipse(985,-10,150,32,-.35,0,7); b.stroke(); b.restore();
+  b.save(); b.beginPath(); b.arc(-20,735,120,0,7); const gg=b.createRadialGradient(-40,700,10,-20,735,120); gg.addColorStop(0,'#8ce99a'); gg.addColorStop(1,'#2b8a3e'); b.fillStyle=gg; b.fill(); b.restore();
+  b.save(); b.beginPath(); b.arc(560,770,110,0,7); const mg=b.createRadialGradient(540,700,10,560,770,110); mg.addColorStop(0,'#f783ac'); mg.addColorStop(1,'#a61e4d'); b.fillStyle=mg; b.fill(); b.restore();
+  // 로켓 + 출발
+  drawRocket(b, 948, 650);
+}
+function star(b,x,y,r,col){ b.save(); b.translate(x,y); b.fillStyle=col; b.beginPath();
+  for(let i=0;i<10;i++){const a=i*Math.PI/5-Math.PI/2, rr=i%2?r*.45:r; b.lineTo(Math.cos(a)*rr,Math.sin(a)*rr);} b.closePath(); b.fill(); b.restore(); }
+function drawRocket(b,x,y){
+  b.save(); b.translate(x,y); b.rotate(-Math.PI/4);
+  // 불꽃
+  b.fillStyle='#ffa94d'; b.beginPath(); b.moveTo(-14,38); b.quadraticCurveTo(0,80,14,38); b.fill();
+  b.fillStyle='#ffe066'; b.beginPath(); b.moveTo(-8,38); b.quadraticCurveTo(0,62,8,38); b.fill();
+  // 날개
+  b.fillStyle='#c92a2a'; b.beginPath(); b.moveTo(-18,10); b.lineTo(-32,40); b.lineTo(-14,34); b.fill();
+  b.beginPath(); b.moveTo(18,10); b.lineTo(32,40); b.lineTo(14,34); b.fill();
+  // 몸통
+  b.fillStyle='#ff6b6b'; b.beginPath(); b.moveTo(0,-56); b.bezierCurveTo(26,-30,22,20,16,38); b.lineTo(-16,38); b.bezierCurveTo(-22,20,-26,-30,0,-56); b.fill();
+  b.fillStyle='#e9ecef'; b.beginPath(); b.moveTo(0,-56); b.bezierCurveTo(12,-46,16,-38,17,-30); b.lineTo(-17,-30); b.bezierCurveTo(-16,-38,-12,-46,0,-56); b.fill();
+  b.fillStyle='#74c0fc'; b.strokeStyle='#fff'; b.lineWidth=3; b.beginPath(); b.arc(0,-6,9,0,7); b.fill(); b.stroke();
+  b.restore();
+  b.save(); b.font="22px Jua"; b.fillStyle='#fff'; b.textAlign='center'; b.fillText('출발',START.x-58,START.y+48); b.restore();
+}
+
+/* 행성 하나 그리기 (보드·문제 그림 공통) */
+function drawPlanet(c,p,x,y,R,opt={}){
+  const t=TYPE[p.find], col=t.color;
+  c.save();
+  // 뒤쪽 장식
+  if(p.find==='둘레'){
+    const n=Math.max(18,Math.round(R/3.2));
+    for(let i=0;i<n;i++){
+      const a=i/n*Math.PI*2, a1=a-Math.PI/n*.9, a2=a+Math.PI/n*.9, rr=R+Math.max(9,R*.17);
+      c.fillStyle=i%2?'#ff922b':'#f0492b';
+      c.beginPath(); c.moveTo(x+Math.cos(a1)*(R-2),y+Math.sin(a1)*(R-2)); c.lineTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr); c.lineTo(x+Math.cos(a2)*(R-2),y+Math.sin(a2)*(R-2)); c.fill();
+    }
+  }
+  if(p.find==='반지름'){
+    c.strokeStyle='#fcc419'; c.lineWidth=Math.max(6,R*.11);
+    c.beginPath(); c.ellipse(x,y,R*1.42,R*.36,-.38,Math.PI,Math.PI*2); c.stroke();
+  }
+  if(p.find==='지름'){
+    c.fillStyle='#4dabf7';
+    const n=Math.max(10,Math.round(R/6));
+    for(let i=0;i<n;i++){const a=i/n*Math.PI*2; c.beginPath(); c.arc(x+Math.cos(a)*R,y+Math.sin(a)*R,Math.max(4,R*.08),0,7); c.fill();}
+  }
+  if(p.find==='넓이'){
+    c.fillStyle='rgba(177,151,252,.35)'; c.beginPath(); c.arc(x,y,R+Math.max(6,R*.1),0,7); c.fill();
+  }
+  // 몸체
+  c.fillStyle='#fff'; c.beginPath(); c.arc(x,y,R,0,7); c.fill();
+  c.lineWidth=Math.max(3,R*.06);
+  c.strokeStyle={넓이:'#7048e8',둘레:'#f0492b',지름:'#1c9fd9',반지름:'#fcc419'}[p.find];
+  c.stroke();
+
+  // 색칠
+  if(p.owner!==null && !opt.noFill){
+    c.save(); c.beginPath(); c.arc(x,y,R-1,0,7); c.clip();
+    if(!p.strokes) p.strokes=makeScribble(R,p.seed);
+    const pts=p.strokes, nDraw=Math.max(2,Math.floor(pts.length*Math.min(1,p.anim)));
+    c.strokeStyle=COLORS[S.players[p.owner].color].c; c.globalAlpha=.85;
+    c.lineWidth=Math.max(7,R*.15); c.lineCap='round'; c.lineJoin='round';
+    c.beginPath(); c.moveTo(x+pts[0][0],y+pts[0][1]);
+    for(let i=1;i<nDraw;i++) c.lineTo(x+pts[i][0],y+pts[i][1]);
+    c.stroke(); c.restore();
+  }
+
+  // 반지름 고리 앞쪽
+  if(p.find==='반지름'){
+    c.strokeStyle='#fcc419'; c.lineWidth=Math.max(6,R*.11);
+    c.beginPath(); c.ellipse(x,y,R*1.42,R*.36,-.38,0,Math.PI); c.stroke();
+  }
+
+  // 주어진 정보
+  const fs=Math.max(13,Math.min(R*.27,opt.big?44:19));
+  c.lineJoin='round';
+  const label=(txt,tx,ty,size,color)=>{c.font=`900 ${size}px "Noto Sans KR"`;c.textAlign='center';c.textBaseline='middle';c.lineWidth=size*.28;c.strokeStyle='rgba(255,255,255,.95)';c.strokeText(txt,tx,ty);c.fillStyle=color;c.fillText(txt,tx,ty);};
+  if(p.given==='r'){
+    c.strokeStyle='#e8590c'; c.lineWidth=Math.max(2.5,R*.035); c.beginPath(); c.moveTo(x,y); c.lineTo(x+R,y); c.stroke();
+    c.fillStyle='#e03131'; c.beginPath(); c.arc(x,y,Math.max(3.5,R*.05),0,7); c.fill();
+    label(`${fmt(p.val)} cm`, x+R*.52, y-fs*.85, fs, '#22264a');
+  }else if(p.given==='d'){
+    c.strokeStyle='#e8590c'; c.lineWidth=Math.max(2.5,R*.035); c.beginPath(); c.moveTo(x-R,y); c.lineTo(x+R,y); c.stroke();
+    c.fillStyle='#e03131'; c.beginPath(); c.arc(x,y,Math.max(3.5,R*.05),0,7); c.fill();
+    label(`${fmt(p.val)} cm`, x, y+fs*.95, fs, '#22264a');
+  }else{
+    const t1 = p.given==='c' ? '원주' : '원의 넓이';
+    const t2 = `${fmt(p.val)} ${p.given==='c'?'cm':'cm²'}`;
+    label(t1, x, y-fs*.7, fs*.85, '#495057');
+    label(t2, x, y+fs*.55, fs, '#22264a');
+  }
+
+  // 이름표 (구할 것)
+  const ls=Math.max(17,Math.min(R*.3,opt.big?46:24));
+  const la=-Math.PI*.72, lx=x+Math.cos(la)*(R*.62), ly=y+Math.sin(la)*(R*.62);
+  c.save(); c.translate(lx,ly); c.rotate(-.55);
+  c.font=`${ls}px Jua`; c.textAlign='center'; c.textBaseline='middle';
+  c.lineWidth=ls*.32; c.strokeStyle='#fff'; c.strokeText(p.find,0,0);
+  c.fillStyle=col; c.fillText(p.find,0,0); c.restore();
+
+  // 주인 표시
+  if(p.owner!==null && p.anim>=1 && !opt.noFill){
+    const bx=x+R*.7, by=y+R*.7, br=Math.max(11,R*.2);
+    c.fillStyle=COLORS[S.players[p.owner].color].c; c.strokeStyle='#fff'; c.lineWidth=3;
+    c.beginPath(); c.arc(bx,by,br,0,7); c.fill(); c.stroke();
+    c.fillStyle='#fff'; c.font=`900 ${br*1.05}px "Noto Sans KR"`; c.textAlign='center'; c.textBaseline='middle';
+    c.fillText(S.players[p.owner].name.slice(0,1),bx,by+1);
+  }
+  c.restore();
+}
+function makeScribble(R,seed){
+  let s=seed; const rnd=()=>{s=(s*9301+49297)%233280;return s/233280;};
+  const pts=[]; const rows=Math.max(10,Math.round(R/3.2));
+  for(let i=0;i<=rows;i++){
+    const y=-R+2*R*i/rows + (rnd()-.5)*4;
+    const side = i%2? 1:-1;
+    pts.push([side*(R*(.95+rnd()*.15)), y]);
+  }
+  // 두 번째 겹 (대각선)
+  for(let i=0;i<=rows*.7;i++){
+    const t=i/(rows*.7); const y=-R+2*R*t;
+    pts.push([(i%2?1:-1)*R*1.05, y+(i%2?R*.25:-R*.25)]);
+  }
+  return pts;
+}
+
+function render(){
+  if(!bgCanvas) makeBg();
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.drawImage(bgCanvas,0,0,board.width,board.height);
+  ctx.setTransform(scale,0,0,scale,0,0);
+
+  S.planets.forEach(p=>drawPlanet(ctx,p,p.x,p.y,p.R));
+
+  // 출발 자리
+  ctx.save(); ctx.setLineDash([6,6]); ctx.strokeStyle='rgba(255,255,255,.55)'; ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.arc(START.x,START.y,PIECE_R+9,0,7); ctx.stroke(); ctx.restore();
+
+  // 조준선
+  const pc=S.piece;
+  if(S.drag && S.drag.power>0.02){
+    const {dx,dy,power}=S.drag, len=Math.hypot(dx,dy)||1, ux=dx/len, uy=dy/len;
+    const L=50+power*170;
+    ctx.save();
+    ctx.strokeStyle=pcolor(S.turn); ctx.globalAlpha=.9; ctx.lineWidth=5; ctx.setLineDash([2,12]); ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(pc.x,pc.y); ctx.lineTo(pc.x+ux*L,pc.y+uy*L); ctx.stroke();
+    ctx.setLineDash([]); ctx.fillStyle=pcolor(S.turn);
+    const hx=pc.x+ux*L, hy=pc.y+uy*L;
+    ctx.beginPath(); ctx.moveTo(hx+ux*16,hy+uy*16); ctx.lineTo(hx-uy*10,hy+ux*10); ctx.lineTo(hx+uy*10,hy-ux*10); ctx.fill();
+    // 고무줄
+    ctx.strokeStyle='rgba(255,255,255,.6)'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(pc.x,pc.y); ctx.lineTo(pc.x-ux*power*70,pc.y-uy*power*70); ctx.stroke();
+    // 힘 막대
+    const by=pc.y-46; ctx.fillStyle='rgba(0,0,0,.45)'; ctx.fillRect(pc.x-60,by,120,12);
+    ctx.fillStyle= power>.85?'#ff6b6b':power>.5?'#ffd43b':'#69db7c'; ctx.fillRect(pc.x-60,by,120*power,12);
+    ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.strokeRect(pc.x-60,by,120,12);
+    ctx.restore();
+  }
+
+  // 말
+  ctx.save();
+  ctx.shadowColor='rgba(0,0,0,.5)'; ctx.shadowBlur=8; ctx.shadowOffsetY=3;
+  ctx.fillStyle=pcolor(S.turn); ctx.beginPath(); ctx.arc(pc.x,pc.y,PIECE_R,0,7); ctx.fill();
+  ctx.shadowColor='transparent';
+  ctx.strokeStyle='#fff'; ctx.lineWidth=3.5; ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,.55)'; ctx.beginPath(); ctx.arc(pc.x-5,pc.y-5,4.5,0,7); ctx.fill();
+  if(S.phase==='aim' && !S.drag){
+    const pulse=(Math.sin(performance.now()/250)+1)/2;
+    ctx.strokeStyle=`rgba(255,212,59,${.3+pulse*.6})`; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.arc(pc.x,pc.y,PIECE_R+6+pulse*5,0,7); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/* ---------- 물리 ---------- */
+const VMAX=25, FRICTION=0.982;
+function step(dt){
+  const k=dt/16.67, pc=S.piece;
+  if(S.phase==='moving'){
+    const sub=3;
+    for(let s=0;s<sub;s++){
+      pc.x+=pc.vx*k/sub; pc.y+=pc.vy*k/sub;
+      if(pc.x<PIECE_R){pc.x=PIECE_R;pc.vx=-pc.vx*.75;sfx.bounce()}
+      if(pc.x>W-PIECE_R){pc.x=W-PIECE_R;pc.vx=-pc.vx*.75;sfx.bounce()}
+      if(pc.y<PIECE_R){pc.y=PIECE_R;pc.vy=-pc.vy*.75;sfx.bounce()}
+      if(pc.y>H-PIECE_R){pc.y=H-PIECE_R;pc.vy=-pc.vy*.75;sfx.bounce()}
+    }
+    const f=Math.pow(FRICTION,k); pc.vx*=f; pc.vy*=f;
+    if(Math.hypot(pc.vx,pc.vy)<0.07){ pc.vx=pc.vy=0; S.phase='stopped'; setTimeout(landed,250); }
+  }
+  S.planets.forEach(p=>{ if(p.owner!==null && p.anim<1) p.anim=Math.min(1,p.anim+dt/1100); });
+}
+let last=performance.now();
+function loop(now){
+  const dt=Math.min(40,now-last); last=now;
+  if($('game').classList.contains('on')){ step(dt); render(); }
+  requestAnimationFrame(loop);
+}
+
+/* ---------- 조작 ---------- */
+function toBoard(e){ const r=board.getBoundingClientRect(); return {x:(e.clientX-r.left)/r.width*W, y:(e.clientY-r.top)/r.height*H}; }
+board.addEventListener('pointerdown',e=>{
+  if(S.phase!=='aim'||S.over) return;
+  board.setPointerCapture(e.pointerId);
+  const p=toBoard(e); S.drag={sx:p.x,sy:p.y,dx:0,dy:0,power:0};
+  setHint(false);
+});
+board.addEventListener('pointermove',e=>{
+  if(!S.drag) return;
+  const p=toBoard(e); const dx=S.drag.sx-p.x, dy=S.drag.sy-p.y;
+  S.drag.dx=dx; S.drag.dy=dy; S.drag.power=Math.min(1,Math.hypot(dx,dy)/220);
+});
+const release=e=>{
+  if(!S.drag) return;
+  const {dx,dy,power}=S.drag; S.drag=null;
+  if(power<0.06){ setHint(true,'더 길게 뒤로 끌어 보세요!'); return; }
+  const len=Math.hypot(dx,dy); const v=VMAX*Math.pow(power,1.15);
+  S.piece.vx=dx/len*v; S.piece.vy=dy/len*v; S.phase='moving'; sfx.shoot();
+};
+board.addEventListener('pointerup',release);
+board.addEventListener('pointercancel',()=>{S.drag=null});
+
+/* ---------- 멈춘 뒤 판정 ---------- */
+function landed(){
+  const pc=S.piece;
+  const hit=S.planets.find(p=>Math.hypot(p.x-pc.x,p.y-pc.y)<p.R);
+  if(!hit){ toast('빈 우주에 멈췄어요','기회가 짝에게 넘어가요'); sfx.pass(); setTimeout(nextTurn,1700); return; }
+  if(hit.owner!==null){
+    const mine=hit.owner===S.turn;
+    toast(mine?'내가 이미 칠한 행성이에요':'이미 색칠된 행성이에요','기회가 짝에게 넘어가요'); sfx.pass(); setTimeout(nextTurn,1800); return;
+  }
+  openProblem(hit);
+}
+let toastTimer=null;
+function toast(a,b,ms=1600){
+  const t=$('toast'); t.querySelector('.t1').textContent=a; t.querySelector('.t2').textContent=b||''; t.classList.add('on');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('on'),ms);
+}
+function nextTurn(){
+  if(S.over) return;
+  if(S.planets.every(p=>p.owner!==null)){ endGame(); return; }
+  S.turn=1-S.turn; resetPiece(); renderCards();
+  toast(`${S.players[S.turn].name} 차례`,'말을 끌어서 튕겨요',1300);
+}
+
+/* ---------- 문제 창 ---------- */
+let calc={expr:'',justEval:false};
+function openProblem(p){
+  S.current=p; S.phase='problem';
+  const t=TYPE[p.find];
+  $('pTag').textContent=p.find+' 행성'; $('pTag').style.background=t.color;
+  $('pWho').textContent=`${S.players[S.turn].name}의 도전`; $('pWho').style.color=pcolor(S.turn);
+  $('pQ').innerHTML=`${givenText(p)}의<br>${t.obj} 구하세요.`;
+  $('unitNote').textContent=`답의 단위: ${t.unit}`;
+  $('formula').classList.remove('on');
+  $('result').classList.remove('on');
+  calc={expr:'',justEval:false}; calcShow();
+  // 그림
+  const d=$('diagram'), c=d.getContext('2d'); c.clearRect(0,0,600,600);
+  drawPlanet(c,{...p,owner:null},300,300,205,{big:true,noFill:true});
+  openM('probModal');
+}
+const KEYS=['C','⌫','3.14','÷','7','8','9','×','4','5','6','−','1','2','3','+','0','.','='];
+function buildKeys(){
+  const k=$('keys'); k.innerHTML='';
+  KEYS.forEach(key=>{
+    const b=document.createElement('button'); b.textContent=key;
+    if('÷×−+'.includes(key)) b.className='op';
+    if(key==='C'||key==='⌫') b.className='fn';
+    if(key==='3.14') b.className='pi';
+    if(key==='=') b.className='eq';
+    if(key==='0') b.className='zero';
+    b.onclick=()=>{press(key);sfx.tap()};
+    k.appendChild(b);
+  });
+}
+function press(key){
+  const ops='÷×−+';
+  if(key==='C'){calc.expr='';calc.justEval=false;}
+  else if(key==='⌫'){ if(calc.justEval){calc.expr='';calc.justEval=false;} else calc.expr=calc.expr.slice(0,-1); }
+  else if(key==='='){ const v=evalExpr(calc.expr); if(v!==null){ calc.lastExpr=calc.expr; calc.expr=fmt(v); calc.justEval=true; } }
+  else if(ops.includes(key)){
+    if(calc.expr==='') return;
+    if(ops.includes(calc.expr.slice(-1))) calc.expr=calc.expr.slice(0,-1);
+    calc.expr+=key; calc.justEval=false;
+  }else{ // 숫자, 점, 3.14
+    if(calc.justEval){calc.expr='';calc.justEval=false;}
+    const lastNum=calc.expr.split(/[÷×−+]/).pop();
+    if(key==='3.14'){ if(lastNum!=='') return; calc.expr+='3.14'; }
+    else if(key==='.'){ if(lastNum.includes('.')) return; calc.expr+= lastNum===''?'0.':'.'; }
+    else { if(lastNum==='0') calc.expr=calc.expr.slice(0,-1); if(lastNum.replace('.','').length>=9) return; calc.expr+=key; }
+  }
+  calcShow();
+}
+function calcShow(){
+  if(calc.justEval){ $('cExpr').textContent=(calc.lastExpr||'')+' ='; $('cVal').textContent=calc.expr; return; }
+  $('cExpr').textContent=calc.expr;
+  const v=evalExpr(calc.expr);
+  $('cVal').textContent = calc.expr==='' ? '0' : (v===null?'…':fmt(v));
+}
+function evalExpr(s){
+  if(!s) return null;
+  s=s.replace(/[÷×−+]$/,'');
+  const toks=s.match(/\d+\.?\d*|\.\d+|[÷×−+]/g); if(!toks) return null;
+  const nums=[], ops=[]; const prec={'+':1,'−':1,'×':2,'÷':2};
+  const apply=()=>{const b=nums.pop(),a=nums.pop(),o=ops.pop();
+    nums.push(o==='+'?a+b:o==='−'?a-b:o==='×'?a*b:(b===0?NaN:a/b));};
+  for(const t of toks){
+    if(prec[t]){ while(ops.length&&prec[ops[ops.length-1]]>=prec[t]) apply(); ops.push(t); }
+    else nums.push(parseFloat(t));
+  }
+  while(ops.length) apply();
+  const v=nums[0]; return (v===undefined||!isFinite(v))?null:v;
+}
+function submitAnswer(){
+  const v=evalExpr(calc.expr);
+  if(v===null){ $('probBox').classList.remove('shake'); void $('probBox').offsetWidth; $('probBox').classList.add('shake'); return; }
+  const p=S.current, ans=answerOf(p), u=TYPE[p.find].unit, ok=Math.abs(v-ans)<0.005;
+  const r=$('result');
+  if(ok){
+    sfx.good();
+    r.innerHTML=`<div class="big" style="color:#2fae60">정답이에요!</div>
+      <div class="ans">${fmt(v)} ${u}</div>
+      <div class="sol">${solutionText(p)}</div>
+      <button class="btn" onclick="claimPlanet()">행성 색칠하기</button>`;
+  }else{
+    sfx.bad();
+    r.innerHTML=`<div class="big" style="color:#e5484d">아쉬워요!</div>
+      <div class="ans">내가 구한 값: ${fmt(v)} ${u}</div>
+      ${S.showSol?`<div class="sol">${solutionText(p)}</div>`:`<div class="sol">이 행성은 아직 주인이 없어요.<br>다음에 말이 들어오면 다시 도전할 수 있어요.</div>`}
+      <button class="btn" onclick="failPlanet()">짝에게 기회 넘기기</button>`;
+  }
+  r.classList.add('on');
+}
+function claimPlanet(){
+  const p=S.current; p.owner=S.turn; p.anim=0; S.players[S.turn].score++;
+  closeM('probModal'); renderCards();
+  toast(`${S.players[S.turn].name}의 행성!`,`${p.find} 행성을 색칠했어요`,1500);
+  setTimeout(nextTurn,1700);
+}
+function failPlanet(){ closeM('probModal'); nextTurn(); }
+
+/* ---------- 끝 ---------- */
+function confirmEnd(){
+  if(S.over) return;
+  if(confirmBox()) endGame();
+}
+function confirmBox(){ return window.confirm('지금 놀이를 끝내고 결과를 볼까요?'); }
+function endGame(){
+  S.over=true; renderCards();
+  const [a,b]=S.players;
+  $('endTitle').textContent = a.score===b.score ? '비겼어요!' : `${(a.score>b.score?a:b).name} 승리!`;
+  $('endScores').innerHTML=S.players.map((p,i)=>`<div style="border:4px solid ${pcolor(i)}"><div class="nm" style="color:${pcolor(i)}">${p.name}</div><div class="n">${p.score}</div><div>개의 행성</div></div>`).join('');
+  sfx.good();
+  setTimeout(()=>openM('endModal'),600);
+}
+
+/* ---------- 시작 ---------- */
+buildChips(); buildKeys(); drawBgStars();
+(document.fonts?document.fonts.ready:Promise.resolve()).then(()=>{bgCanvas=null;});
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

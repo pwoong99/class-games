@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>수업 게임 모음</title>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Noto Sans KR',sans-serif;min-height:100vh;background:#0b1240;color:#fff;
+    background-image:radial-gradient(ellipse at 20% 10%,#1f3b9a 0%,transparent 55%),radial-gradient(ellipse at 85% 90%,#3a1d7a 0%,transparent 50%);
+    display:flex;flex-direction:column;align-items:center;padding:48px 20px}
+  h1{font-family:'Jua';font-weight:400;font-size:46px}
+  p.sub{color:#c8d3ff;margin-top:6px}
+  .list{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px;width:100%;max-width:960px;margin-top:34px}
+  a.game{display:block;text-decoration:none;color:#22264a;background:#fff;border-radius:22px;padding:22px 24px;box-shadow:0 8px 24px rgba(0,0,0,.35);transition:.2s}
+  a.game:active{transform:scale(.97)}
+  .subj{display:inline-block;font-size:14px;font-weight:700;color:#fff;background:#7048e8;border-radius:999px;padding:3px 12px}
+  .game h2{font-family:'Jua';font-weight:400;font-size:28px;margin-top:10px}
+  .game p{font-size:15px;color:#5c6080;margin-top:6px;line-height:1.5}
+  footer{margin-top:auto;padding-top:40px;font-size:13px;color:#9fb0ee}
+</style>
+</head>
+<body>
+  <h1>수업 게임 모음</h1>
+  <p class="sub">수업 시간에 함께 하는 놀이와 게임</p>
+  <div class="list">
+    <a class="game" href="./find-my-planet/">
+      <span class="subj">수학 6-2 · 원의 둘레와 넓이</span>
+      <h2>내 행성을 찾아라!</h2>
+      <p>말을 튕겨 행성에 넣고, 원의 넓이·둘레·지름·반지름을 구해 행성을 색칠하는 2인 놀이</p>
+    </a>
+  </div>
+  <footer>만든이 푸르이든</footer>
+</body>
+</html>
