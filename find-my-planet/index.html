@@ -45,6 +45,7 @@
   .btn:active{transform:translateY(3px);box-shadow:0 2px 0 #c99a00}
   .btn.ghost{background:rgba(255,255,255,.14);color:#fff;box-shadow:0 5px 0 rgba(0,0,0,.3)}
   .btn.small{font-size:19px;padding:10px 24px}
+  .homelink{position:absolute;top:16px;left:18px;font-size:16px;font-weight:700;color:#fff;background:rgba(255,255,255,.12);padding:10px 18px;border-radius:999px;text-decoration:none}
   .credit{position:absolute;bottom:12px;right:18px;font-size:13px;color:#9fb0ee;background:none;text-decoration:underline dotted}
 
   /* ---------- 게임 화면 ---------- */
@@ -52,6 +53,7 @@
   .topbar{width:100%;height:66px;display:flex;align-items:center;gap:12px;padding:0 14px;flex-shrink:0}
   .topbar .logo{font-family:'Jua';font-size:24px;white-space:nowrap}
   .topbar .logo b{color:#ffd43b;font-weight:400}
+  @media (max-width:1250px){.topbar .logo{display:none}}
   .pcards{flex:1;display:flex;justify-content:center;gap:12px}
   .pcard{display:flex;align-items:center;gap:10px;padding:6px 16px 6px 8px;border-radius:999px;background:rgba(255,255,255,.08);border:3px solid transparent;transition:.25s;min-width:200px}
   .pcard .dot{width:34px;height:34px;border-radius:50%;flex-shrink:0;border:3px solid #fff}
@@ -138,6 +140,7 @@
 
 <!-- 시작 화면 -->
 <section class="screen on" id="start">
+  <a class="homelink" href="../">← 수업 게임 모음</a>
   <div class="title">내 <b>행성</b>을 찾아라!</div>
   <div class="subtitle">6학년 2학기 수학 · 5. 원의 둘레와 넓이 · 수학 놀이에 풍덩</div>
   <div class="players">
@@ -158,12 +161,13 @@
 <!-- 게임 -->
 <section class="screen" id="game">
   <div class="topbar">
+    <button class="iconbtn" onclick="askHome()">← 처음으로</button>
     <div class="logo">내 <b>행성</b>을 찾아라!</div>
     <div class="pcards" id="pcards"></div>
     <button class="iconbtn" onclick="openRules()">놀이 방법</button>
-    <button class="iconbtn" id="soundBtn" onclick="toggleSound()">소리 켜짐</button>
+    <button class="iconbtn" id="soundBtn" onclick="toggleSound()">소리 켬</button>
     <button class="iconbtn" id="fsBtn" onclick="toggleFull()">전체 화면</button>
-    <button class="iconbtn" onclick="confirmEnd()">놀이 끝내기</button>
+    <button class="iconbtn" onclick="confirmEnd()">끝내기</button>
   </div>
   <div class="board-wrap" id="boardWrap">
     <canvas id="board"></canvas>
@@ -233,11 +237,11 @@
 <!-- 끝내기 확인 -->
 <div class="modal" id="quitModal" onclick="if(event.target===this)closeM('quitModal')">
   <div class="mbox endbox" style="width:520px">
-    <h2 style="font-size:34px">놀이를 끝낼까요?</h2>
-    <p style="margin:14px 0 6px;font-size:18px">지금까지 색칠한 행성 수로 결과를 보여 줘요.</p>
+    <h2 style="font-size:34px" id="quitTitle">놀이를 끝낼까요?</h2>
+    <p style="margin:14px 0 6px;font-size:18px" id="quitText">지금까지 색칠한 행성 수로 결과를 보여 줘요.</p>
     <div class="btnrow">
       <button class="btn ghost small" style="background:#eef0f8;color:#22264a;box-shadow:0 5px 0 #cfd3e6" onclick="closeM('quitModal')">계속하기</button>
-      <button class="btn small" onclick="closeM('quitModal');endGame()">끝내기</button>
+      <button class="btn small" id="quitOk" onclick="closeM('quitModal');quitAction()">끝내기</button>
     </div>
   </div>
 </div>
@@ -255,8 +259,9 @@
 /* =========================================================
    내 행성을 찾아라!  — 만든이 푸르이든
    ========================================================= */
-const VERSION = 'v1.1';
+const VERSION = 'v1.11';
 const CHANGELOG = [
+  ['v1.11','2026-11-25','게임 중 \'처음으로\' 버튼, 시작 화면에 \'수업 게임 모음\'으로 가는 버튼 추가'],
   ['v1.1','2026-11-25','가위바위보 대신 무작위로 순서 정하기, 태블릿 터치 개선(출발 자리 이동·짧게 끌어도 최대 힘·두 손가락 무시·전체 화면 버튼), 끝내기 확인 창'],
   ['v1.0','2026-11-25','첫 공개: 말 튕기기, 교과서 행성 11개·무작위 행성, 계산기, 가위바위보 순서 정하기'],
 ];
@@ -333,7 +338,7 @@ const sfx = {
   tap(){beep(800,.04,'sine',.06)},
   pass(){beep(440,.12,'sine',.1);beep(330,.16,'sine',.1,.1)}
 };
-function toggleSound(){S.sound=!S.sound;$('soundBtn').textContent=S.sound?'소리 켜짐':'소리 꺼짐'}
+function toggleSound(){S.sound=!S.sound;$('soundBtn').textContent=S.sound?'소리 켬':'소리 끔'}
 
 /* ---------- 배경 별 ---------- */
 function drawBgStars(){
@@ -831,8 +836,15 @@ function failPlanet(){ closeM('probModal'); nextTurn(); }
 /* ---------- 끝 ---------- */
 function confirmEnd(){
   if(S.over) return;
-  openM('quitModal');
+  setQuit('놀이를 끝낼까요?','지금까지 색칠한 행성 수로 결과를 보여 줘요.','끝내기',endGame);
 }
+let quitAction=()=>{};
+function setQuit(t,txt,ok,fn){ $('quitTitle').textContent=t; $('quitText').textContent=txt; $('quitOk').textContent=ok; quitAction=fn; openM('quitModal'); }
+function askHome(){
+  if(S.over){ show('start'); return; }
+  setQuit('처음 화면으로 갈까요?','지금 하던 놀이는 사라져요.','처음으로',()=>{ S.over=true; S.phase='aim'; S.drag=null; show('start'); });
+}
+
 /* ---------- 전체 화면 ---------- */
 function toggleFull(){
   const d=document, el=d.documentElement;
