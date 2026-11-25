@@ -12,7 +12,8 @@
   body{font-family:'Noto Sans KR',sans-serif;color:#fff;background:#0b1240;
     background-image:radial-gradient(ellipse at 20% 10%,#1f3b9a 0%,transparent 55%),radial-gradient(ellipse at 85% 90%,#3a1d7a 0%,transparent 50%);
     user-select:none;-webkit-user-select:none}
-  button{font-family:inherit;cursor:pointer;border:none}
+  button{font-family:inherit;cursor:pointer;border:none;touch-action:manipulation}
+  html,body{overscroll-behavior:none;-webkit-touch-callout:none}
   .jua{font-family:'Jua',sans-serif;font-weight:400}
   .screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center}
   .screen.on{display:flex}
@@ -37,7 +38,7 @@
   .opts .card{flex:1}
   .opts h4{font-size:16px;color:#c8d3ff;margin-bottom:10px;font-weight:700}
   .seg{display:flex;background:rgba(0,0,0,.25);border-radius:12px;padding:4px}
-  .seg button{flex:1;padding:10px 6px;border-radius:9px;background:transparent;color:#c8d3ff;font-size:16px;font-weight:700}
+  .seg button{flex:1;padding:10px 6px;border-radius:9px;background:transparent;color:#c8d3ff;font-size:16px;font-weight:700;white-space:nowrap}
   .seg button.sel{background:#ffd43b;color:#2a1a6e}
   .btnrow{display:flex;gap:14px;margin-top:24px}
   .btn{font-family:'Jua';font-size:24px;padding:14px 34px;border-radius:999px;background:#ffd43b;color:#2a1a6e;box-shadow:0 5px 0 #c99a00}
@@ -45,19 +46,6 @@
   .btn.ghost{background:rgba(255,255,255,.14);color:#fff;box-shadow:0 5px 0 rgba(0,0,0,.3)}
   .btn.small{font-size:19px;padding:10px 24px}
   .credit{position:absolute;bottom:12px;right:18px;font-size:13px;color:#9fb0ee;background:none;text-decoration:underline dotted}
-
-  /* ---------- 가위바위보 ---------- */
-  .rps-wrap{display:flex;gap:30px;margin-top:26px}
-  .rps-side{width:400px;text-align:center;padding:24px}
-  .rps-side .nm{font-family:'Jua';font-size:30px;margin-bottom:6px}
-  .rps-side .st{font-size:16px;color:#c8d3ff;height:24px}
-  .rps-btns{display:flex;gap:12px;justify-content:center;margin-top:16px}
-  .rps-btns button{width:104px;height:104px;border-radius:24px;background:rgba(255,255,255,.12);font-size:52px;border:3px solid transparent}
-  .rps-btns button span{display:block;font-size:15px;color:#fff;font-weight:700;margin-top:-4px}
-  .rps-btns button:active{transform:scale(.95)}
-  .rps-btns.done button{opacity:.3;pointer-events:none}
-  .rps-reveal{font-size:96px;height:120px;line-height:120px}
-  .rps-result{font-family:'Jua';font-size:34px;margin-top:20px;height:44px;color:#ffd43b}
 
   /* ---------- 게임 화면 ---------- */
   #game{justify-content:flex-start}
@@ -157,26 +145,14 @@
     <div class="card pbox"><h3>두 번째 친구</h3><input id="n1" maxlength="8" placeholder="이름" value="친구 2"><div class="chips" id="c1"></div></div>
   </div>
   <div class="opts">
-    <div class="card"><h4>행성 문제</h4><div class="seg" id="modeSeg"><button data-v="book" class="sel">교과서 행성 11개</button><button data-v="random">새로운 행성 (무작위)</button></div></div>
-    <div class="card"><h4>틀렸을 때</h4><div class="seg" id="solSeg"><button data-v="0" class="sel">정답 숨기기</button><button data-v="1">정답과 풀이 보여 주기</button></div></div>
+    <div class="card"><h4>행성 문제</h4><div class="seg" id="modeSeg"><button data-v="book" class="sel">교과서 행성 11개</button><button data-v="random">무작위 행성</button></div></div>
+    <div class="card"><h4>틀렸을 때</h4><div class="seg" id="solSeg"><button data-v="0" class="sel">정답 숨기기</button><button data-v="1">정답·풀이 보여 주기</button></div></div>
   </div>
   <div class="btnrow">
     <button class="btn ghost" onclick="openRules()">놀이 방법</button>
-    <button class="btn" onclick="toRps()">가위바위보로 순서 정하기</button>
+    <button class="btn" onclick="startGame()">게임 시작</button>
   </div>
   <button class="credit" onclick="openLog()">만든이 푸르이든 · <span class="ver"></span></button>
-</section>
-
-<!-- 가위바위보 -->
-<section class="screen" id="rps">
-  <div class="title" style="font-size:46px">가위바위보로 순서 정하기</div>
-  <div class="subtitle">한 사람씩 몰래 고르세요. 둘 다 고르면 결과가 나와요.</div>
-  <div class="rps-wrap">
-    <div class="card rps-side" id="rs0"><div class="nm"></div><div class="st"></div><div class="rps-reveal"></div><div class="rps-btns"></div></div>
-    <div class="card rps-side" id="rs1"><div class="nm"></div><div class="st"></div><div class="rps-reveal"></div><div class="rps-btns"></div></div>
-  </div>
-  <div class="rps-result" id="rpsResult"></div>
-  <div class="btnrow"><button class="btn ghost small" onclick="show('start')">뒤로</button><button class="btn ghost small" onclick="rpsSkip()">무작위로 정하기</button></div>
 </section>
 
 <!-- 게임 -->
@@ -186,11 +162,12 @@
     <div class="pcards" id="pcards"></div>
     <button class="iconbtn" onclick="openRules()">놀이 방법</button>
     <button class="iconbtn" id="soundBtn" onclick="toggleSound()">소리 켜짐</button>
+    <button class="iconbtn" id="fsBtn" onclick="toggleFull()">전체 화면</button>
     <button class="iconbtn" onclick="confirmEnd()">놀이 끝내기</button>
   </div>
   <div class="board-wrap" id="boardWrap">
     <canvas id="board"></canvas>
-    <div class="hint" id="hint">말을 뒤로 끌었다가 놓으면 튕겨 나가요!</div>
+    <div class="hint" id="hint">화면 아무 곳이나 손가락으로 누른 채 뒤로 끌었다가 놓아요!</div>
     <div class="toast" id="toast"><div class="t1"></div><div class="t2"></div></div>
   </div>
 </section>
@@ -225,8 +202,8 @@
     <button class="close-x" onclick="closeM('rulesModal')">×</button>
     <h2>놀이 방법</h2>
     <ol>
-      <li>가위바위보를 해서 말을 튕길 순서를 정하고, 자기 색을 골라요.</li>
-      <li>출발 자리에 있는 말을 손가락으로 <b>뒤로 끌었다가 놓으면</b> 반대쪽으로 튕겨 나가요. 많이 끌수록 멀리 가요.</li>
+      <li>두 사람이 이름과 자기 색을 고르고 시작하면, 먼저 할 사람이 무작위로 정해져요.</li>
+      <li>판의 <b>아무 곳이나</b> 손가락으로 누른 채 <b>가고 싶은 쪽의 반대로 끌었다가 놓으면</b> 출발 자리의 말이 튕겨 나가요. 많이 끌수록 멀리 가요. (끌다가 처음 자리로 돌아와 놓으면 취소돼요.)</li>
       <li>말이 들어간 행성을 보고, 행성에 적힌 것(넓이·둘레·지름·반지름)을 계산기로 구해요.</li>
       <li>답을 바르게 구하면 그 행성에 내 색이 칠해져요. 틀리면 기회가 짝에게 넘어가요.</li>
       <li>이미 색칠된 행성이나 빈 우주에 말이 멈추면 기회가 짝에게 넘어가요.</li>
@@ -248,7 +225,19 @@
     <div class="scores" id="endScores"></div>
     <div class="btnrow">
       <button class="btn ghost small" style="background:#eef0f8;color:#22264a;box-shadow:0 5px 0 #cfd3e6" onclick="closeM('endModal');show('start')">처음으로</button>
-      <button class="btn" onclick="closeM('endModal');newGame(1-S.first)">한 판 더 (순서 바꿔서)</button>
+      <button class="btn" onclick="closeM('endModal');startGame()">한 판 더</button>
+    </div>
+  </div>
+</div>
+
+<!-- 끝내기 확인 -->
+<div class="modal" id="quitModal" onclick="if(event.target===this)closeM('quitModal')">
+  <div class="mbox endbox" style="width:520px">
+    <h2 style="font-size:34px">놀이를 끝낼까요?</h2>
+    <p style="margin:14px 0 6px;font-size:18px">지금까지 색칠한 행성 수로 결과를 보여 줘요.</p>
+    <div class="btnrow">
+      <button class="btn ghost small" style="background:#eef0f8;color:#22264a;box-shadow:0 5px 0 #cfd3e6" onclick="closeM('quitModal')">계속하기</button>
+      <button class="btn small" onclick="closeM('quitModal');endGame()">끝내기</button>
     </div>
   </div>
 </div>
@@ -266,13 +255,14 @@
 /* =========================================================
    내 행성을 찾아라!  — 만든이 푸르이든
    ========================================================= */
-const VERSION = 'v1.0';
+const VERSION = 'v1.1';
 const CHANGELOG = [
+  ['v1.1','2026-11-25','가위바위보 대신 무작위로 순서 정하기, 태블릿 터치 개선(출발 자리 이동·짧게 끌어도 최대 힘·두 손가락 무시·전체 화면 버튼), 끝내기 확인 창'],
   ['v1.0','2026-11-25','첫 공개: 말 튕기기, 교과서 행성 11개·무작위 행성, 계산기, 가위바위보 순서 정하기'],
 ];
 const PI = 3.14;
 const W = 1000, H = 700;
-const START = {x:895, y:600};
+const START = {x:860, y:565};
 const PIECE_R = 15;
 
 const COLORS = [
@@ -373,43 +363,30 @@ function segInit(id,cb){
 segInit('modeSeg',v=>S.mode=v);
 segInit('solSeg',v=>S.showSol=v==='1');
 
-/* ---------- 가위바위보 ---------- */
-const HANDS=[{e:'✌️',n:'가위'},{e:'✊',n:'바위'},{e:'🖐️',n:'보'}];
-let rpsPick=[null,null];
+/* ---------- 순서 정하기 (무작위) ---------- */
 function readNames(){
   [0,1].forEach(p=>S.players[p].name=($('n'+p).value.trim()||('친구 '+(p+1))));
 }
-function toRps(){
-  readNames(); rpsPick=[null,null]; $('rpsResult').textContent='';
-  [0,1].forEach(p=>{
-    const side=$('rs'+p);
-    side.style.borderColor=pcolor(p);
-    side.querySelector('.nm').textContent=S.players[p].name;
-    side.querySelector('.nm').style.color=pcolor(p);
-    side.querySelector('.st').textContent='하나를 골라요';
-    side.querySelector('.rps-reveal').textContent='❔';
-    const bx=side.querySelector('.rps-btns'); bx.className='rps-btns'; bx.innerHTML='';
-    HANDS.forEach((h,i)=>{const b=document.createElement('button');b.innerHTML=`${h.e}<span>${h.n}</span>`;b.onclick=()=>rpsChoose(p,i);bx.appendChild(b)});
-  });
-  show('rps');
+function startGame(){
+  readNames();
+  const w=Math.random()<.5?0:1;
+  newGame(w);
+  // 이름이 번갈아 깜빡이다가 먼저 할 사람에서 멈춤
+  S.phase='intro'; setHint(false);
+  let k=0; const total=12+w;
+  const spin=()=>{
+    const who=k%2; S.turn=who; renderCards(); sfx.tap();
+    toast(S.players[who].name,'누가 먼저 할까요?',400);
+    k++;
+    if(k<=total) setTimeout(spin,70+k*12);
+    else{
+      S.turn=w; renderCards(); sfx.good();
+      toast(`${S.players[w].name} 먼저 시작!`,'판을 누른 채 뒤로 끌었다가 놓아요',1800);
+      setTimeout(()=>{S.phase='aim'; setHint(true);},1500);
+    }
+  };
+  spin();
 }
-function rpsChoose(p,i){
-  rpsPick[p]=i; sfx.tap();
-  const side=$('rs'+p);
-  side.querySelector('.st').textContent='골랐어요! 짝을 기다려요';
-  side.querySelector('.rps-reveal').textContent='✅';
-  side.querySelector('.rps-btns').classList.add('done');
-  if(rpsPick[0]!==null && rpsPick[1]!==null) setTimeout(rpsReveal,350);
-}
-function rpsReveal(){
-  [0,1].forEach(p=>{$('rs'+p).querySelector('.rps-reveal').textContent=HANDS[rpsPick[p]].e;$('rs'+p).querySelector('.st').textContent=HANDS[rpsPick[p]].n});
-  const a=rpsPick[0],b=rpsPick[1];
-  if(a===b){ $('rpsResult').textContent='비겼어요! 다시 한 번!'; sfx.pass(); setTimeout(toRps,1400); return; }
-  const w = ((a-b+3)%3===1)?0:1;   // 가위0 바위1 보2 : 바위>가위, 보>바위, 가위>보
-  $('rpsResult').textContent=`${S.players[w].name} 먼저 시작!`; sfx.good();
-  setTimeout(()=>newGame(w),1500);
-}
-function rpsSkip(){ const w=Math.random()<.5?0:1; $('rpsResult').textContent=`${S.players[w].name} 먼저 시작!`; setTimeout(()=>newGame(w),900); }
 
 /* ---------- 문제 만들기 ---------- */
 function randomProblem(){
@@ -508,7 +485,7 @@ function makeBg(){
   b.save(); b.beginPath(); b.arc(-20,735,120,0,7); const gg=b.createRadialGradient(-40,700,10,-20,735,120); gg.addColorStop(0,'#8ce99a'); gg.addColorStop(1,'#2b8a3e'); b.fillStyle=gg; b.fill(); b.restore();
   b.save(); b.beginPath(); b.arc(560,770,110,0,7); const mg=b.createRadialGradient(540,700,10,560,770,110); mg.addColorStop(0,'#f783ac'); mg.addColorStop(1,'#a61e4d'); b.fillStyle=mg; b.fill(); b.restore();
   // 로켓 + 출발
-  drawRocket(b, 948, 650);
+  drawRocket(b, START.x+52, START.y+52);
 }
 function star(b,x,y,r,col){ b.save(); b.translate(x,y); b.fillStyle=col; b.beginPath();
   for(let i=0;i<10;i++){const a=i*Math.PI/5-Math.PI/2, rr=i%2?r*.45:r; b.lineTo(Math.cos(a)*rr,Math.sin(a)*rr);} b.closePath(); b.fill(); b.restore(); }
@@ -680,6 +657,7 @@ function render(){
 
 /* ---------- 물리 ---------- */
 const VMAX=25, FRICTION=0.982;
+const DRAG_FULL=150;   // 이만큼(보드 기준) 끌면 최대 힘
 function step(dt){
   const k=dt/16.67, pc=S.piece;
   if(S.phase==='moving'){
@@ -706,25 +684,29 @@ function loop(now){
 /* ---------- 조작 ---------- */
 function toBoard(e){ const r=board.getBoundingClientRect(); return {x:(e.clientX-r.left)/r.width*W, y:(e.clientY-r.top)/r.height*H}; }
 board.addEventListener('pointerdown',e=>{
-  if(S.phase!=='aim'||S.over) return;
+  if(S.phase!=='aim'||S.over||S.drag) return;
+  e.preventDefault();
   board.setPointerCapture(e.pointerId);
-  const p=toBoard(e); S.drag={sx:p.x,sy:p.y,dx:0,dy:0,power:0};
+  const p=toBoard(e); S.drag={id:e.pointerId,sx:p.x,sy:p.y,dx:0,dy:0,power:0};
   setHint(false);
 });
 board.addEventListener('pointermove',e=>{
-  if(!S.drag) return;
+  if(!S.drag||e.pointerId!==S.drag.id) return;
+  e.preventDefault();
   const p=toBoard(e); const dx=S.drag.sx-p.x, dy=S.drag.sy-p.y;
-  S.drag.dx=dx; S.drag.dy=dy; S.drag.power=Math.min(1,Math.hypot(dx,dy)/220);
+  S.drag.dx=dx; S.drag.dy=dy; S.drag.power=Math.min(1,Math.hypot(dx,dy)/DRAG_FULL);
 });
 const release=e=>{
-  if(!S.drag) return;
+  if(!S.drag||e.pointerId!==S.drag.id) return;
   const {dx,dy,power}=S.drag; S.drag=null;
-  if(power<0.06){ setHint(true,'더 길게 뒤로 끌어 보세요!'); return; }
+  if(power<0.06){ setHint(true,'조금 더 길게 끌었다가 놓아 보세요!'); return; }
   const len=Math.hypot(dx,dy); const v=VMAX*Math.pow(power,1.15);
   S.piece.vx=dx/len*v; S.piece.vy=dy/len*v; S.phase='moving'; sfx.shoot();
+  if(navigator.vibrate) try{navigator.vibrate(25)}catch(_){}
 };
 board.addEventListener('pointerup',release);
-board.addEventListener('pointercancel',()=>{S.drag=null});
+board.addEventListener('pointercancel',e=>{if(S.drag&&e.pointerId===S.drag.id)S.drag=null});
+board.addEventListener('contextmenu',e=>e.preventDefault());
 
 /* ---------- 멈춘 뒤 판정 ---------- */
 function landed(){
@@ -849,9 +831,19 @@ function failPlanet(){ closeM('probModal'); nextTurn(); }
 /* ---------- 끝 ---------- */
 function confirmEnd(){
   if(S.over) return;
-  if(confirmBox()) endGame();
+  openM('quitModal');
 }
-function confirmBox(){ return window.confirm('지금 놀이를 끝내고 결과를 볼까요?'); }
+/* ---------- 전체 화면 ---------- */
+function toggleFull(){
+  const d=document, el=d.documentElement;
+  if(d.fullscreenElement||d.webkitFullscreenElement){ (d.exitFullscreen||d.webkitExitFullscreen).call(d); }
+  else{ const f=el.requestFullscreen||el.webkitRequestFullscreen; if(f) f.call(el); }
+}
+['fullscreenchange','webkitfullscreenchange'].forEach(ev=>document.addEventListener(ev,()=>{
+  $('fsBtn').textContent=(document.fullscreenElement||document.webkitFullscreenElement)?'전체 화면 끄기':'전체 화면';
+  setTimeout(resize,150);
+}));
+if(!(document.documentElement.requestFullscreen||document.documentElement.webkitRequestFullscreen)) $('fsBtn').style.display='none';
 function endGame(){
   S.over=true; renderCards();
   const [a,b]=S.players;
